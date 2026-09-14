@@ -1,0 +1,18 @@
+# Volunteer personal data - never push
+data/
+output/
+_EN_*.csv
+schedule.txt
+volunteer-availability/availability/
+
+# Python virtual envs (this repo has several stray ones)
+.venv/
+virtual/
+create/
+#/
+volunteer-availability/venv/
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store

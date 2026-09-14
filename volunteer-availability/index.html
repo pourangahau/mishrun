@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Availability Calendar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Volunteer Availability Calendar</h1>
+            <p>Select your available dates for volunteer roster scheduling</p>
+        </header>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label for="volunteerName">Your Name:</label>
+                <input type="text" id="volunteerName" placeholder="Enter your name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="shiftType">Shift Type:</label>
+                <select id="shiftType" required>
+                    <option value="">Select shift type</option>
+                    <option value="N">North only</option>
+                    <option value="S">South only</option>
+                    <option value="NS">Both North and South</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="workload">Workload (shifts per fortnight):</label>
+                <input type="number" id="workload" min="1" max="10" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="monthYear">Select Month and Year:</label>
+                <div class="month-year-selector">
+                    <select id="monthSelect" required>
+                        <option value="">Month</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                    <select id="yearSelect" required>
+                        <option value="">Year</option>
+                    </select>
+                    <button type="button" id="generateCalendar">Generate Calendar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendarSection" class="calendar-section" style="display: none;">
+            <h2 id="calendarTitle"></h2>
+            <p class="instruction">Click on dates to toggle your availability (green = available, gray = not available)</p>
+            <div id="calendar" class="calendar"></div>
+            
+            <div class="selected-dates">
+                <h3>Selected Available Dates:</h3>
+                <div id="selectedDates" class="dates-list"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" id="clearAll">Clear All</button>
+                <button type="button" id="selectAll">Select All</button>
+                <button type="button" id="saveData">Save Availability</button>
+            </div>
+        </div>
+
+        <div id="exportSection" class="export-section" style="display: none;">
+            <h3>Export Data</h3>
+            <p>Copy this data to add to your volunteer scheduling system:</p>
+            <textarea id="exportData" readonly rows="3"></textarea>
+            <button type="button" id="copyData">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
