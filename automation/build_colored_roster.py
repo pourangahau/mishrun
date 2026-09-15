@@ -109,6 +109,14 @@ def _month_number(month_name):
     raise ValueError(f'Unrecognized month name: {month_name!r}')
 
 
+def ordinal(day):
+    if 11 <= day % 100 <= 13:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+    return f'{day}{suffix}'
+
+
 def build_workbook(year, month, assignments, south_label='South'):
     colors = load_color_map()
     weeks = calendar.monthcalendar(year, month)  # list of [Mon..Sun], 0 = outside month
@@ -133,7 +141,7 @@ def build_workbook(year, month, assignments, south_label='South'):
                 date_col = 2 + 2 * w
                 monday = week[0]
                 if monday:
-                    ws.cell(row=next_row, column=date_col, value=monday)
+                    ws.cell(row=next_row, column=date_col, value=ordinal(monday))
             next_row += 1
 
         for offset, (weekday_idx, label_text) in enumerate(weekday_rows):
@@ -145,7 +153,7 @@ def build_workbook(year, month, assignments, south_label='South'):
                 day = week[weekday_idx]
                 if not day:
                     continue
-                ws.cell(row=r, column=date_col, value=day).alignment = center
+                ws.cell(row=r, column=date_col, value=ordinal(day)).alignment = center
                 name = assignments.get(day, {}).get(key, '')
                 if name:
                     cell = ws.cell(row=r, column=name_col, value=name)
