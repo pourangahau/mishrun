@@ -1,7 +1,8 @@
 # Mish Run roster scheduler
 
 Builds the monthly volunteer roster for the Mish Run (North and South, one
-morning shift = one hour, Tuesday-Friday). Given each volunteer's availability
+morning shift = one hour, North Tuesday-Friday and South Monday-Friday).
+Given each volunteer's availability
 and how many shifts they can do, [OR-Tools](https://developers.google.com/optimization)
 solves for a fair assignment, and a colorized spreadsheet is produced for
 sharing.

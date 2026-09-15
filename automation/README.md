@@ -69,8 +69,9 @@ Add `--south-label City` if you want the second run labelled "City" instead of
   submission is used (so they can resubmit to correct a mistake).
 - Names must be spelled the same way every month, or they'll get treated as
   a new volunteer with a new color.
-- The form only offers Tuesday-Friday, matching how shifts are actually run
-  (confirmed from the existing solver output and the old calendar app's rules).
+- The form offers Monday-Friday. North only ever gets scheduled Tuesday-Friday;
+  South also runs Mondays. A North-only volunteer ticking a Monday is harmless -
+  the solver just never uses it.
 - **Fixed while building this**: `data/data_EN.csv` was missing a blank line
   that the scheduler's format expects (compare against any of the older,
   working `data/_EN_*.csv` files). That bug was silently dropping the row

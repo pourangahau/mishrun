@@ -67,7 +67,9 @@ def main():
                     days.append(d)
         return days
 
-    run_days = certain_weekdays_in_month([2, 3, 4, 5])
+    # North only runs Tuesday-Friday; South also runs Mondays.
+    north_run_days = certain_weekdays_in_month([2, 3, 4, 5])
+    south_run_days = certain_weekdays_in_month([1, 2, 3, 4, 5])
 
     # Distance between workdays per person
     distance = 1
@@ -162,8 +164,9 @@ def main():
 
     # Maximum one volunteer per shift.
     for d in list_of_days:
-        if d in run_days:
+        if d in north_run_days:
             model.Add(sum(schedule[(v, d, 0)] for v in volunteers) <= 1)
+        if d in south_run_days:
             model.Add(sum(schedule[(v, d, 1)] for v in volunteers) <= 1)
 
     # At least four days between shifts per volunteer
@@ -183,9 +186,9 @@ def main():
 
     model.Maximize(
             sum(schedule[(v, d, 0)]
-                for d in run_days for v in volunteers)
+                for d in north_run_days for v in volunteers)
             + sum(schedule[(v, d, 1)]
-                for d in run_days for v in volunteers)
+                for d in south_run_days for v in volunteers)
     )
 
     # SOLUTION
@@ -247,13 +250,13 @@ def main():
 
     needed = {}
     needed[0] = []
-    for d in list_of_days:
+    for d in north_run_days:
         try:
             a = solution_ds_v[(d, 0)]
         except:
             needed[0].append(d)
     needed[1] = []
-    for d in run_days:
+    for d in south_run_days:
         try:
             a = solution_ds_v[(d, 1)]
         except:
@@ -348,7 +351,7 @@ def main():
             txt_item = title + vol_l[v] + ' ' * 2
             csv_item = title + volunteer_dic[v]
         except:
-            if everyday or chatday and d in run_days:
+            if everyday or chatday and d in south_run_days:
                 csv_item = title + '-'
                 txt_item = title + '-' + ' ' * (width - 4)
             else:
@@ -366,7 +369,7 @@ def main():
             pass
         if has:
             daily_shift_item += ' ' * 5 + vol_r[v]
-        elif everyday or chatday and day in run_days:
+        elif everyday or chatday and day in south_run_days:
             daily_shift_item += ' ' * (width - 6) + ' ' * 5 + '-'
         else:
             daily_shift_item += ' ' * width
@@ -512,7 +515,7 @@ def main():
     # # Needed
     # # 6. hétfő - csetes, Adél mellé
     need_title = False
-    for d in certain_weekdays_in_month([2, 3, 4, 5]):
+    for d in certain_weekdays_in_month([1, 2, 3, 4, 5]):
         need = False
         try:
             if needed_daily[d] > -1:

@@ -31,9 +31,14 @@ PALETTE = [
     'FFD5A6BD', 'FFB6D7A8', 'FFF9CB9C', 'FF9FC5E8', 'FFD0E0E3', 'FFEAD1DC',
 ]
 
-WEEKDAY_ROWS = [
+# Index into calendar.monthcalendar's Mon..Sun week tuples.
+# North only runs Tuesday-Friday; South also runs Mondays.
+NORTH_WEEKDAY_ROWS = [
     (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'),
-]  # index into calendar.monthcalendar's Mon..Sun week tuples
+]
+SOUTH_WEEKDAY_ROWS = [
+    (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'),
+]
 
 
 def load_color_map():
@@ -115,17 +120,24 @@ def build_workbook(year, month, assignments, south_label='South'):
     bold = Font(bold=True)
     center = Alignment(horizontal='center')
 
-    def write_block(start_row, label, key):
+    def write_block(start_row, label, key, weekday_rows):
         ws.cell(row=start_row, column=1, value=f'{label} (week starting)').font = bold
-        ws.cell(row=start_row + 1, column=1, value='Monday')
-        for w, week in enumerate(weeks):
-            date_col = 2 + 2 * w
-            monday = week[0]
-            if monday:
-                ws.cell(row=start_row + 1, column=date_col, value=monday)
 
-        for offset, (weekday_idx, label_text) in enumerate(WEEKDAY_ROWS):
-            r = start_row + 2 + offset
+        # A Monday reference row (dates only, no assignee) is only needed when
+        # Monday isn't already one of this block's real shift rows below.
+        has_monday_row = any(weekday_idx == 0 for weekday_idx, _ in weekday_rows)
+        next_row = start_row + 1
+        if not has_monday_row:
+            ws.cell(row=next_row, column=1, value='Monday')
+            for w, week in enumerate(weeks):
+                date_col = 2 + 2 * w
+                monday = week[0]
+                if monday:
+                    ws.cell(row=next_row, column=date_col, value=monday)
+            next_row += 1
+
+        for offset, (weekday_idx, label_text) in enumerate(weekday_rows):
+            r = next_row + offset
             ws.cell(row=r, column=1, value=label_text)
             for w, week in enumerate(weeks):
                 date_col = 2 + 2 * w
@@ -139,10 +151,10 @@ def build_workbook(year, month, assignments, south_label='South'):
                     cell = ws.cell(row=r, column=name_col, value=name)
                     fill = color_for(name, colors)
                     cell.fill = PatternFill(start_color=fill, end_color=fill, fill_type='solid')
-        return start_row + 2 + len(WEEKDAY_ROWS)
+        return next_row + len(weekday_rows)
 
-    next_row = write_block(1, 'North', 'N')
-    write_block(next_row + 2, south_label, 'S')
+    next_row = write_block(1, 'North', 'N', NORTH_WEEKDAY_ROWS)
+    write_block(next_row + 2, south_label, 'S', SOUTH_WEEKDAY_ROWS)
 
     for col in range(1, 2 + 2 * len(weeks)):
         letter = get_column_letter(col)

@@ -24,7 +24,8 @@ function createMonthlyForm() {
   var form = FormApp.create('Mish Run Availability - ' + monthName + ' ' + TARGET_YEAR);
   form.setDescription(
       'Let us know what shifts you can help with this month. ' +
-      'One shift = one hour in the morning, Tuesday-Friday.');
+      'One shift = one hour in the morning. North runs Tuesday-Friday; ' +
+      'South also runs Mondays.');
   form.setCollectEmail(false);
 
   form.addTextItem()
@@ -47,6 +48,7 @@ function createMonthlyForm() {
   var dayChoices = availableDayLabels(TARGET_YEAR, TARGET_MONTH);
   form.addCheckboxItem()
       .setTitle('Which days are you available?')
+      .setHelpText('Mondays are South only - if you only do North, no need to pick a Monday.')
       .setChoiceValues(dayChoices)
       .setRequired(true);
 
@@ -63,7 +65,8 @@ function createMonthlyForm() {
       'to run_roster.py on your computer.');
 }
 
-// Builds ['Tue 1', 'Wed 2', ...] for every Tuesday-Friday in the given month.
+// Builds ['Mon 1', 'Tue 2', ...] for every Monday-Friday in the given month
+// (Monday is South-only, but offered to everyone - see the help text above).
 function availableDayLabels(year, month) {
   var labels = [];
   var abbrev = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -71,7 +74,7 @@ function availableDayLabels(year, month) {
   for (var d = 1; d <= daysInMonth; d++) {
     var date = new Date(year, month - 1, d);
     var dow = date.getDay(); // 0=Sun..6=Sat
-    if (dow >= 2 && dow <= 5) { // Tue-Fri only, matches the run's shift days
+    if (dow >= 1 && dow <= 5) { // Mon-Fri
       labels.push(abbrev[dow] + ' ' + d);
     }
   }
