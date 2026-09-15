@@ -21,8 +21,8 @@ This repo has two parts:
 ## One-time setup
 
 ```bash
-git clone https://github.com/pourangahau/mishrun.git
-cd mishrun
+git clone https://github.com/pourangahau/mishrun.git volunteer-scheduler
+cd volunteer-scheduler
 python3 -m venv .venv
 .venv/bin/pip install -r automation/requirements.txt   # openpyxl
 .venv/bin/pip install ortools                          # the solver
@@ -77,7 +77,7 @@ Anouk,NS,"13,19,20,26,27",1
 Then:
 
 ```bash
-cd mishrun
+cd volunteer-scheduler
 .venv/bin/python schedule.py
 ```
 

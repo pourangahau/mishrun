@@ -13,6 +13,7 @@ Google Form so it's typed once, in a fixed format, by each volunteer.
 ```
 cd ~/volunteer-scheduler
 .venv/bin/pip install -r automation/requirements.txt   # openpyxl (already done once for you)
+.venv/bin/pip install ortools                          # the solver (already done once for you)
 ```
 
 ## Every month
