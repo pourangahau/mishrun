@@ -14,6 +14,7 @@ can view" - create_form.gs sets that automatically. Nothing here needs
 Google API credentials; it just fetches the sheet's public CSV export.
 """
 import calendar
+import csv
 import json
 import os
 import re
@@ -45,12 +46,16 @@ def extract_sheet_id(text):
     return m.group(1) if m else text
 
 
-def fetch_sheet_csv(sheet_id, dest_path):
+def _fetch_csv_bytes(sheet_id, timeout):
     export_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
     req = urllib.request.Request(export_url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+def fetch_sheet_csv(sheet_id, dest_path):
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = resp.read()
+        data = _fetch_csv_bytes(sheet_id, timeout=30)
     except urllib.error.HTTPError as e:
         raise RuntimeError(
             f'Google returned HTTP {e.code} fetching the sheet. Make sure it is shared '
@@ -65,12 +70,46 @@ def fetch_sheet_csv(sheet_id, dest_path):
         f.write(data)
 
 
+def fetch_latest_from_index(index_sheet_url):
+    """Best-effort lookup in the index sheet create_form.gs appends a row to
+    each month (Year, Month, Form URL, Responses URL, Created). Returns
+    {'year', 'month', 'sheet_url'} for the most recent entry, or None if
+    it's not configured, empty, or can't be read right now."""
+    if not index_sheet_url or not index_sheet_url.strip():
+        return None
+    try:
+        sheet_id = extract_sheet_id(index_sheet_url)
+        data = _fetch_csv_bytes(sheet_id, timeout=10)
+        rows = list(csv.reader(data.decode('utf-8-sig').splitlines()))
+    except Exception:
+        return None
+
+    best = None
+    for row in rows[1:]:  # skip the header row
+        if len(row) < 4:
+            continue
+        try:
+            key = (int(row[0]), int(row[1]))
+        except ValueError:
+            continue
+        if best is None or key > best[0]:
+            best = (key, row[3])
+    if not best:
+        return None
+    (year, month), sheet_url = best
+    return {'year': year, 'month': month, 'sheet_url': sheet_url}
+
+
 def load_state():
+    now = datetime.now()
+    state = {
+        'year': now.year, 'month': now.month, 'sheet_url': '',
+        'south_label': 'South', 'index_sheet_url': '',
+    }
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, encoding='utf-8') as f:
-            return json.load(f)
-    now = datetime.now()
-    return {'year': now.year, 'month': now.month, 'sheet_url': '', 'south_label': 'South'}
+            state.update(json.load(f))
+    return state
 
 
 def save_state(state):
@@ -122,6 +161,8 @@ PAGE = """
   .download { display: inline-block; margin: 1rem 0; padding: 0.5rem 1rem; background: #2563eb; color: white; text-decoration: none; border-radius: 4px; }
   .needed { background: #fff8e1; border: 1px solid #ffe08a; padding: 0.8rem; border-radius: 4px; margin-top: 1.5rem; }
   .needed ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+  .hint { color: #555; font-size: 0.85rem; margin: -0.8rem 0 1rem; }
+  .settings-label { color: #666; font-weight: 400 !important; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -129,11 +170,16 @@ PAGE = """
 
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
+{% if auto_filled %}
+  <div class="hint">Auto-filled from the index sheet's latest entry ({{ state.year }}-{{ '%02d'|format(state.month) }}).</div>
+{% endif %}
+
 <form method="post" action="{{ url_for('generate') }}">
   <label>Year</label><input type="number" name="year" value="{{ state.year }}" required>
   <label>Month (1-12)</label><input type="number" name="month" min="1" max="12" value="{{ state.month }}" required>
   <label>Responses sheet link</label><input type="text" name="sheet_url" value="{{ state.sheet_url }}" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%" required>
   <label>South run label</label><input type="text" name="south_label" value="{{ state.south_label }}">
+  <label class="settings-label">Index sheet link (optional)</label><input type="text" name="index_sheet_url" value="{{ state.index_sheet_url }}" placeholder="from createIndexSheet() - auto-fills the fields above" style="width:100%">
   <button type="submit">Generate roster</button>
 </form>
 
@@ -171,7 +217,12 @@ PAGE = """
 
 @app.route('/')
 def index():
-    return render_template_string(PAGE, state=load_state(), result=None, error=None)
+    state = load_state()
+    latest = fetch_latest_from_index(state.get('index_sheet_url', ''))
+    auto_filled = bool(latest)
+    if latest:
+        state = {**state, 'year': latest['year'], 'month': latest['month'], 'sheet_url': latest['sheet_url']}
+    return render_template_string(PAGE, state=state, result=None, error=None, auto_filled=auto_filled)
 
 
 @app.route('/generate', methods=['POST'])
@@ -181,6 +232,7 @@ def generate():
         'month': int(request.form['month']),
         'sheet_url': request.form['sheet_url'].strip(),
         'south_label': request.form.get('south_label', 'South').strip() or 'South',
+        'index_sheet_url': request.form.get('index_sheet_url', '').strip(),
     }
     save_state(state)
 

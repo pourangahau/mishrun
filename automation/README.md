@@ -16,6 +16,15 @@ cd ~/volunteer-scheduler
 .venv/bin/pip install ortools                          # the solver (already done once for you)
 ```
 
+Also, so the website can find each month's responses sheet on its own instead
+of you copying the link by hand every time: in `automation/create_form.gs`,
+run `createIndexSheet` once (View -> Logs for its sheet ID), paste that ID
+into `INDEX_SHEET_ID` at the top of the script, and paste the index sheet's
+URL into the website's "Index sheet link" field once. From then on
+`createMonthlyForm` appends a row to it automatically and the website reads
+the latest one on startup. Skip this if you'd rather paste the responses
+link in by hand each month - everything else still works.
+
 ## Every month
 
 **1. Create the form** (takes under a minute)
@@ -24,13 +33,12 @@ cd ~/volunteer-scheduler
 - Paste in `automation/create_form.gs`.
 - Edit `TARGET_YEAR` / `TARGET_MONTH` at the top.
 - Run -> `createMonthlyForm` (first time, approve the authorization prompt).
-- Open View -> Logs (or Executions -> this run -> Logs) to get the Form URL and
-  the responses spreadsheet URL. The script automatically shares the
-  responses spreadsheet as "Anyone with the link can view" so the roster
-  website (below) can read it - it's not published or searchable, just
-  accessible to anyone who has that exact link.
-- Post the Form URL in the WhatsApp group: *"Please fill in your availability
-  for <month>: <link>"*.
+- Open View -> Logs (or Executions -> this run -> Logs) to get the Form URL.
+  Post it in the WhatsApp group: *"Please fill in your availability for
+  <month>: <link>"*. The script automatically shares the responses
+  spreadsheet as "Anyone with the link can view" so the roster website
+  (below) can read it - it's not published or searchable, just accessible
+  to anyone who has that exact link.
 
 **2. Once responses are in, build the roster with the website**
 
@@ -39,10 +47,12 @@ cd ~/volunteer-scheduler
 .venv/bin/python automation/webapp.py
 ```
 
-Open <http://localhost:5000>, paste in the responses spreadsheet URL from
-step 1, set the year/month (and South's label if you want "City" instead),
-and click Generate. It fetches the responses, runs `schedule.py`, and shows
-the colorized roster right on the page with a download link for the `.xlsx`.
+Open <http://localhost:5000>. If you set up the index sheet above, the
+year/month/responses link are already filled in with the latest month -
+otherwise paste in the responses spreadsheet URL yourself. Set South's
+label if you want "City" instead, and click Generate. It fetches the
+responses, runs `schedule.py`, and shows the colorized roster right on the
+page with a download link for the `.xlsx`.
 
 This does everything `run_roster.py` used to require a manual CSV download
 for: it backs up the existing `data/data_EN.csv`, writes a fresh one from

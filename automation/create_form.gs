@@ -3,14 +3,16 @@
 // One-time setup:
 //   1. Go to https://script.google.com -> New project.
 //   2. Delete the placeholder code and paste this whole file in.
-//   3. Edit TARGET_YEAR / TARGET_MONTH below for the month you're collecting availability for.
-//   4. Run menu -> select "createMonthlyForm" -> click Run. First run asks you to authorize
-//      access to your own Forms/Sheets/Drive - that's expected, approve it.
-//   5. Open "View -> Logs" (or Executions) to get the Form URL and the responses
-//      spreadsheet URL. Post the Form URL in the WhatsApp group instead of asking
-//      people to type their availability as free text. Paste the responses
-//      spreadsheet URL into the roster website (automation/webapp.py) once
-//      it's time to build the roster.
+//   3. Run menu -> select "createIndexSheet" -> click Run (first time, approve the
+//      authorization prompt). Open View -> Logs and copy the sheet ID it prints into
+//      INDEX_SHEET_ID below. This lets the roster website auto-detect the latest
+//      month's responses sheet on startup - do this once and never again.
+//   4. Edit TARGET_YEAR / TARGET_MONTH below for the month you're collecting availability for.
+//   5. Run menu -> select "createMonthlyForm" -> click Run.
+//   6. Open "View -> Logs" (or Executions) to get the Form URL. Post it in the
+//      WhatsApp group instead of asking people to type their availability as free text.
+//      (You no longer need to copy the responses spreadsheet URL by hand - the
+//      website picks it up from the index sheet automatically.)
 //
 // Each new month: change TARGET_YEAR / TARGET_MONTH and run createMonthlyForm again.
 // It creates a brand new form + response spreadsheet each time, so old months' responses
@@ -18,6 +20,22 @@
 
 var TARGET_YEAR = 2026;
 var TARGET_MONTH = 9; // 1-12
+
+// Paste the ID that createIndexSheet() logs, once. Leave blank to skip this feature -
+// createMonthlyForm() still works fine, you'll just paste the responses URL by hand.
+var INDEX_SHEET_ID = '';
+
+// One-time setup: creates a small permanent sheet that createMonthlyForm() appends a
+// row to every month, so the roster website can look up the latest month's responses
+// sheet on its own. Run this once, then paste its ID into INDEX_SHEET_ID above.
+function createIndexSheet() {
+  var ss = SpreadsheetApp.create('Mish Run Form Index');
+  ss.getSheets()[0].appendRow(['Year', 'Month', 'Form URL', 'Responses URL', 'Created']);
+  DriveApp.getFileById(ss.getId())
+      .setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  Logger.log('Index sheet created: ' + ss.getUrl());
+  Logger.log('Paste this ID into INDEX_SHEET_ID at the top of this script: ' + ss.getId());
+}
 
 function createMonthlyForm() {
   var monthName = Utilities.formatDate(
@@ -65,9 +83,22 @@ function createMonthlyForm() {
   DriveApp.getFileById(ss.getId())
       .setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
+  if (INDEX_SHEET_ID) {
+    try {
+      SpreadsheetApp.openById(INDEX_SHEET_ID).getSheets()[0]
+          .appendRow([TARGET_YEAR, TARGET_MONTH, form.getPublishedUrl(), ss.getUrl(), new Date()]);
+    } catch (e) {
+      Logger.log('Could not write to the index sheet - check INDEX_SHEET_ID is correct. ' + e);
+    }
+  } else {
+    Logger.log(
+        'INDEX_SHEET_ID is not set, so the website will not auto-detect this month. ' +
+        'Run createIndexSheet() once and paste its ID in to fix that.');
+  }
+
   Logger.log('Form URL (share this in WhatsApp): ' + form.getPublishedUrl());
   Logger.log('Editor URL: ' + form.getEditUrl());
-  Logger.log('Responses spreadsheet (paste this into the roster website): ' + ss.getUrl());
+  Logger.log('Responses spreadsheet: ' + ss.getUrl());
 }
 
 // Builds ['Mon 1', 'Tue 2', ...] for every Monday-Friday in the given month
