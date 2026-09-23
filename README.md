@@ -45,11 +45,15 @@ Full instructions: [`automation/README.md`](automation/README.md). In short:
    ```bash
    .venv/bin/python automation/webapp.py
    ```
-   Open <http://localhost:5000>, paste in the responses spreadsheet link
-   from step 1, and click Generate. It fetches the responses, writes
-   `data/data_EN.csv`, runs the solver, and shows the colorized roster
-   right on the page with a download link for the `.xlsx` - no manual CSV
-   download, typing, or coloring required.
+   Open <http://localhost:5000> and click Generate. It fetches the
+   responses, writes `data/data_EN.csv`, runs the solver, and shows the
+   colorized roster right on the page with a download link for the `.xlsx`
+   - no manual CSV download, typing, or coloring required.
+
+   The year/month/responses-link fields auto-fill with the latest month if
+   you've set up the one-time "index sheet" (see
+   [`automation/README.md`](automation/README.md)); otherwise paste in the
+   responses spreadsheet link from step 1 yourself.
 
 ## Running the solver directly (manual / legacy path)
 
