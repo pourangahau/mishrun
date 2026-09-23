@@ -107,6 +107,7 @@ PAGE = """
 <style>
   body { font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
   h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.2rem; margin: 1.5rem 0 0.3rem; }
   form { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem 1rem; align-items: center; margin-bottom: 1.5rem; }
   form label { font-weight: 600; }
   input, button { font-size: 1rem; padding: 0.35rem; }
@@ -137,6 +138,7 @@ PAGE = """
 </form>
 
 {% if result %}
+  <h2>{{ result.month_label }}</h2>
   <a class="download" href="{{ url_for('download', filename=result.filename) }}">Download {{ result.filename }}</a>
 
   {% for block in result.blocks %}
@@ -212,7 +214,8 @@ def generate():
 
         year, month, assignments = build_colored_roster.parse_schedule_csv(schedule_csv)
         colors = build_colored_roster.load_color_map()
-        weeks, blocks = build_colored_roster.compute_blocks(year, month, assignments, state['south_label'], colors)
+        weeks, blocks, month_label = build_colored_roster.compute_blocks(
+            year, month, assignments, state['south_label'], colors)
         build_colored_roster.save_color_map(colors)
 
         wb = build_colored_roster.build_workbook(year, month, assignments, south_label=state['south_label'])
@@ -221,6 +224,7 @@ def generate():
 
         result_data = {
             'filename': xlsx_name,
+            'month_label': month_label,
             'blocks': blocks,
             'needed': parse_still_need(schedule_txt),
         }

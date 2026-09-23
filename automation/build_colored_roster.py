@@ -119,12 +119,14 @@ def ordinal(day):
 
 def compute_blocks(year, month, assignments, south_label, colors):
     """Shared layout logic for both the .xlsx writer and the webapp's HTML
-    view, so the two never drift apart. Returns (weeks, blocks) where weeks
-    is calendar.monthcalendar's [Mon..Sun] list and blocks is:
+    view, so the two never drift apart. Returns (weeks, blocks, month_label)
+    where weeks is calendar.monthcalendar's [Mon..Sun] list, month_label is
+    e.g. "September 2026", and blocks is:
     [{'title': str, 'rows': [{'label': str, 'cells': [cell, ...]}]}]
     with one cell per week, each cell a dict with 'date' (an ordinal string
     or None), 'name' (or None) and 'color' (8-hex ARGB, or None)."""
     weeks = calendar.monthcalendar(year, month)  # list of [Mon..Sun], 0 = outside month
+    month_label = f'{calendar.month_name[month]} {year}'
     blocks = []
 
     for label, key, weekday_rows in (
@@ -155,23 +157,25 @@ def compute_blocks(year, month, assignments, south_label, colors):
                 cells.append({'date': ordinal(day), 'name': name, 'color': color})
             rows.append({'label': label_text, 'cells': cells})
 
-        blocks.append({'title': f'{label} (week starting)', 'rows': rows})
+        blocks.append({'title': label, 'rows': rows})
 
-    return weeks, blocks
+    return weeks, blocks, month_label
 
 
 def build_workbook(year, month, assignments, south_label='South'):
     colors = load_color_map()
-    weeks, blocks = compute_blocks(year, month, assignments, south_label, colors)
+    weeks, blocks, month_label = compute_blocks(year, month, assignments, south_label, colors)
 
     wb = Workbook()
     ws = wb.active
     ws.title = 'Roster'
 
     bold = Font(bold=True)
+    title_font = Font(bold=True, size=14)
     center = Alignment(horizontal='center')
 
-    row = 1
+    ws.cell(row=1, column=1, value=month_label).font = title_font
+    row = 3
     for block in blocks:
         ws.cell(row=row, column=1, value=block['title']).font = bold
         row += 1
