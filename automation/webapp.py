@@ -138,9 +138,9 @@ PAGE = """
 </form>
 
 {% if result %}
-  <h2>{{ result.month_label }}</h2>
   <a class="download" href="{{ url_for('download', filename=result.filename) }}">Download {{ result.filename }}</a>
 
+  <h2>{{ result.month_label }}</h2>
   {% for block in result.blocks %}
     <div class="block-title">{{ block.title }}</div>
     <table>
