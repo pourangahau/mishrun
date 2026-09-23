@@ -117,9 +117,52 @@ def ordinal(day):
     return f'{day}{suffix}'
 
 
+def compute_blocks(year, month, assignments, south_label, colors):
+    """Shared layout logic for both the .xlsx writer and the webapp's HTML
+    view, so the two never drift apart. Returns (weeks, blocks) where weeks
+    is calendar.monthcalendar's [Mon..Sun] list and blocks is:
+    [{'title': str, 'rows': [{'label': str, 'cells': [cell, ...]}]}]
+    with one cell per week, each cell a dict with 'date' (an ordinal string
+    or None), 'name' (or None) and 'color' (8-hex ARGB, or None)."""
+    weeks = calendar.monthcalendar(year, month)  # list of [Mon..Sun], 0 = outside month
+    blocks = []
+
+    for label, key, weekday_rows in (
+        ('North', 'N', NORTH_WEEKDAY_ROWS),
+        (south_label, 'S', SOUTH_WEEKDAY_ROWS),
+    ):
+        rows = []
+
+        # A Monday reference row (dates only, no assignee) is only needed when
+        # Monday isn't already one of this block's real shift rows below.
+        has_monday_row = any(weekday_idx == 0 for weekday_idx, _ in weekday_rows)
+        if not has_monday_row:
+            cells = []
+            for week in weeks:
+                monday = week[0]
+                cells.append({'date': ordinal(monday) if monday else None, 'name': None, 'color': None})
+            rows.append({'label': 'Monday', 'cells': cells})
+
+        for weekday_idx, label_text in weekday_rows:
+            cells = []
+            for week in weeks:
+                day = week[weekday_idx]
+                if not day:
+                    cells.append({'date': None, 'name': None, 'color': None})
+                    continue
+                name = assignments.get(day, {}).get(key, '') or None
+                color = color_for(name, colors) if name else None
+                cells.append({'date': ordinal(day), 'name': name, 'color': color})
+            rows.append({'label': label_text, 'cells': cells})
+
+        blocks.append({'title': f'{label} (week starting)', 'rows': rows})
+
+    return weeks, blocks
+
+
 def build_workbook(year, month, assignments, south_label='South'):
     colors = load_color_map()
-    weeks = calendar.monthcalendar(year, month)  # list of [Mon..Sun], 0 = outside month
+    weeks, blocks = compute_blocks(year, month, assignments, south_label, colors)
 
     wb = Workbook()
     ws = wb.active
@@ -128,41 +171,22 @@ def build_workbook(year, month, assignments, south_label='South'):
     bold = Font(bold=True)
     center = Alignment(horizontal='center')
 
-    def write_block(start_row, label, key, weekday_rows):
-        ws.cell(row=start_row, column=1, value=f'{label} (week starting)').font = bold
-
-        # A Monday reference row (dates only, no assignee) is only needed when
-        # Monday isn't already one of this block's real shift rows below.
-        has_monday_row = any(weekday_idx == 0 for weekday_idx, _ in weekday_rows)
-        next_row = start_row + 1
-        if not has_monday_row:
-            ws.cell(row=next_row, column=1, value='Monday')
-            for w, week in enumerate(weeks):
-                date_col = 2 + 2 * w
-                monday = week[0]
-                if monday:
-                    ws.cell(row=next_row, column=date_col, value=ordinal(monday))
-            next_row += 1
-
-        for offset, (weekday_idx, label_text) in enumerate(weekday_rows):
-            r = next_row + offset
-            ws.cell(row=r, column=1, value=label_text)
-            for w, week in enumerate(weeks):
+    row = 1
+    for block in blocks:
+        ws.cell(row=row, column=1, value=block['title']).font = bold
+        row += 1
+        for r in block['rows']:
+            ws.cell(row=row, column=1, value=r['label'])
+            for w, cell in enumerate(r['cells']):
                 date_col = 2 + 2 * w
                 name_col = date_col + 1
-                day = week[weekday_idx]
-                if not day:
-                    continue
-                ws.cell(row=r, column=date_col, value=ordinal(day)).alignment = center
-                name = assignments.get(day, {}).get(key, '')
-                if name:
-                    cell = ws.cell(row=r, column=name_col, value=name)
-                    fill = color_for(name, colors)
-                    cell.fill = PatternFill(start_color=fill, end_color=fill, fill_type='solid')
-        return next_row + len(weekday_rows)
-
-    next_row = write_block(1, 'North', 'N', NORTH_WEEKDAY_ROWS)
-    write_block(next_row + 2, south_label, 'S', SOUTH_WEEKDAY_ROWS)
+                if cell['date'] is not None:
+                    ws.cell(row=row, column=date_col, value=cell['date']).alignment = center
+                if cell['name']:
+                    xl_cell = ws.cell(row=row, column=name_col, value=cell['name'])
+                    xl_cell.fill = PatternFill(start_color=cell['color'], end_color=cell['color'], fill_type='solid')
+            row += 1
+        row += 2  # gap before the next block
 
     for col in range(1, 2 + 2 * len(weeks)):
         letter = get_column_letter(col)

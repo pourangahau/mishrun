@@ -4,6 +4,8 @@ output/
 _EN_*.csv
 schedule.txt
 volunteer-availability/availability/
+automation/generated/
+automation/webapp_state.json
 
 # Python virtual envs (this repo has several stray ones)
 .venv/

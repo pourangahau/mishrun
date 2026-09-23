@@ -6,8 +6,11 @@
 //   3. Edit TARGET_YEAR / TARGET_MONTH below for the month you're collecting availability for.
 //   4. Run menu -> select "createMonthlyForm" -> click Run. First run asks you to authorize
 //      access to your own Forms/Sheets/Drive - that's expected, approve it.
-//   5. Open "View -> Logs" (or Executions) to get the Form URL. Post that link in the
-//      WhatsApp group instead of asking people to type their availability as free text.
+//   5. Open "View -> Logs" (or Executions) to get the Form URL and the responses
+//      spreadsheet URL. Post the Form URL in the WhatsApp group instead of asking
+//      people to type their availability as free text. Paste the responses
+//      spreadsheet URL into the roster website (automation/webapp.py) once
+//      it's time to build the roster.
 //
 // Each new month: change TARGET_YEAR / TARGET_MONTH and run createMonthlyForm again.
 // It creates a brand new form + response spreadsheet each time, so old months' responses
@@ -56,13 +59,15 @@ function createMonthlyForm() {
       'Mish Run Availability Responses - ' + monthName + ' ' + TARGET_YEAR);
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
 
+  // Let the roster website read this sheet's CSV export directly, without
+  // needing Google API credentials. Only people with this exact link can
+  // view it - it's not published or searchable.
+  DriveApp.getFileById(ss.getId())
+      .setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
   Logger.log('Form URL (share this in WhatsApp): ' + form.getPublishedUrl());
   Logger.log('Editor URL: ' + form.getEditUrl());
-  Logger.log('Responses spreadsheet: ' + ss.getUrl());
-  Logger.log(
-      'When it is time to build the roster: open the responses spreadsheet, ' +
-      'File -> Download -> Comma Separated Values (.csv), then feed that file ' +
-      'to run_roster.py on your computer.');
+  Logger.log('Responses spreadsheet (paste this into the roster website): ' + ss.getUrl());
 }
 
 // Builds ['Mon 1', 'Tue 2', ...] for every Monday-Friday in the given month

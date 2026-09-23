@@ -12,9 +12,9 @@ This repo has two parts:
 - **`schedule.py`** - the original solver (a customized fork of
   [imreszakal/volunteer-scheduler](https://github.com/imreszakal/volunteer-scheduler)).
   Unchanged; still does all the actual scheduling.
-- **`automation/`** - a Google Form + set of scripts that replace the old
-  manual steps: reading availability off WhatsApp and hand-typing it in, and
-  hand-colorizing the output into a spreadsheet. See
+- **`automation/`** - a Google Form + a local website + scripts that replace
+  the old manual steps: reading availability off WhatsApp and hand-typing it
+  in, and hand-colorizing the output into a spreadsheet. See
   [`automation/README.md`](automation/README.md) for the full monthly
   workflow - this file is the overview and one-time setup.
 
@@ -24,7 +24,7 @@ This repo has two parts:
 git clone https://github.com/pourangahau/mishrun.git volunteer-scheduler
 cd volunteer-scheduler
 python3 -m venv .venv
-.venv/bin/pip install -r automation/requirements.txt   # openpyxl
+.venv/bin/pip install -r automation/requirements.txt   # openpyxl, flask
 .venv/bin/pip install ortools                          # the solver
 ```
 
@@ -41,16 +41,15 @@ Full instructions: [`automation/README.md`](automation/README.md). In short:
    into [script.google.com](https://script.google.com) and running it.
 2. Post the form link in WhatsApp instead of asking people to type their
    availability as free text.
-3. Once responses are in, download the response spreadsheet as CSV and run:
+3. Once responses are in, run the local website:
    ```bash
-   .venv/bin/python automation/run_roster.py \
-       ~/Downloads/"form-responses.csv" \
-       --year 2026 --month 9 \
-       --out ~/Downloads/"Mish Run September 2026.xlsx"
+   .venv/bin/python automation/webapp.py
    ```
-   This writes `data/data_EN.csv`, runs the solver, and produces a colorized
-   `.xlsx` with a consistent color per volunteer - no manual typing or
-   coloring required.
+   Open <http://localhost:5000>, paste in the responses spreadsheet link
+   from step 1, and click Generate. It fetches the responses, writes
+   `data/data_EN.csv`, runs the solver, and shows the colorized roster
+   right on the page with a download link for the `.xlsx` - no manual CSV
+   download, typing, or coloring required.
 
 ## Running the solver directly (manual / legacy path)
 
@@ -96,6 +95,6 @@ From there you can either colorize it by hand as before, or run it through
 | Path | What it is |
 |---|---|
 | `schedule.py`, `lang/`, `config.py` | The solver (unchanged) |
-| `automation/` | Form creation, CSV conversion, colorized roster builder |
+| `automation/` | Form creation, local website, CSV conversion, colorized roster builder |
 | `data/`, `output/` | Gitignored - real volunteer data, local only |
 | `volunteer-availability/` | An earlier, unfinished attempt at a web-based availability calendar (Flask + JS). Superseded by `automation/`, kept for reference. |
