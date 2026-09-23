@@ -139,6 +139,15 @@ def main():
             model.Add(sum(schedule[(id, d, s)]
                           for s in shifts for d in range(a, b + 1)) <= workload)
 
+        # At most one shift per calendar week. For someone whose workload is
+        # more than 1 per fortnight, this spreads it across different weeks
+        # instead of e.g. doubling them up on the same week and skipping the
+        # next. For workload 1 this is already implied by the fortnight cap
+        # above, so it's a no-op.
+        for week_days in weeks.values():
+            model.Add(sum(schedule[(id, d, s)]
+                          for s in shifts for d in week_days) <= 1)
+
     # volunteer_dic = {ID:name}, volunteer_dic_r = {name:ID}
     volunteer_dic = {}
     volunteer_dic_r = {}
