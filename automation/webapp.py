@@ -114,9 +114,10 @@ PAGE = """
   .error { background: #fde8e8; border: 1px solid #e5a0a0; padding: 0.8rem; border-radius: 4px; margin-bottom: 1rem; white-space: pre-wrap; }
   .block-title { font-weight: 700; margin: 1.5rem 0 0.4rem; }
   table { border-collapse: collapse; margin-bottom: 0.5rem; }
-  td { border: 1px solid #ccc; padding: 4px 8px; text-align: center; font-size: 0.9rem; min-width: 70px; }
+  td { border: 1px solid #ccc; padding: 4px 8px; text-align: center; font-size: 0.9rem; }
   td.rowlabel { text-align: left; font-weight: 600; background: #f5f5f5; min-width: 90px; }
-  td.date { color: #666; font-size: 0.8rem; }
+  td.date { color: #666; font-size: 0.8rem; background: #fafafa; min-width: 40px; border-right: none; }
+  td.namecell { min-width: 80px; border-left: none; font-weight: 600; }
   .download { display: inline-block; margin: 1rem 0; padding: 0.5rem 1rem; background: #2563eb; color: white; text-decoration: none; border-radius: 4px; }
   .needed { background: #fff8e1; border: 1px solid #ffe08a; padding: 0.8rem; border-radius: 4px; margin-top: 1.5rem; }
   .needed ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
@@ -145,10 +146,8 @@ PAGE = """
         <tr>
           <td class="rowlabel">{{ row.label }}</td>
           {% for cell in row.cells %}
-            <td style="{% if cell.color %}background:#{{ cell.color[2:] }};{% endif %}">
-              {% if cell.date %}<div class="date">{{ cell.date }}</div>{% endif %}
-              {{ cell.name or '' }}
-            </td>
+            <td class="date">{{ cell.date or '' }}</td>
+            <td class="namecell" style="{% if cell.color %}background:#{{ cell.color[2:] }};{% endif %}">{{ cell.name or '' }}</td>
           {% endfor %}
         </tr>
       {% endfor %}
